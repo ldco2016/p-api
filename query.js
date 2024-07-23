@@ -5,6 +5,11 @@ const touchLogin = require("./queries/touch-login");
 
 module.exports = async (req, res) => {
   const { id } = req.session;
+
+  console.log("Session:", id);
+  if (!id) {
+    return res.status(400).json({ error: "Session ID is missing" });
+  }
   validateId(id);
 
   if (!(await dbExists(id))) {
@@ -15,6 +20,7 @@ module.exports = async (req, res) => {
   const client = await createClient(id);
 
   try {
+    console.log("Query:", req.body.query);
     const result = await client.query(req.body.query);
 
     if (Array.isArray(result)) {
@@ -36,6 +42,9 @@ module.exports = async (req, res) => {
         },
       ]);
     }
+  } catch (err) {
+    console.error("Query Execution Error:", err);
+    res.status(500).json({ error: err.message });
   } finally {
     await client.end();
   }
